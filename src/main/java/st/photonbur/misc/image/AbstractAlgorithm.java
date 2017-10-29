@@ -70,6 +70,10 @@ public abstract class AbstractAlgorithm extends BufferedImage implements ImagePr
                 diff.getHour(), diff.getMinute(), diff.getSecond(), diff.getNano() / 1000000);
     }
 
+    public BufferedImage getGeneratingImage() {
+        return this;
+    }
+
     /**
      * Lets the algorithm go ahead and generate the image.
      */

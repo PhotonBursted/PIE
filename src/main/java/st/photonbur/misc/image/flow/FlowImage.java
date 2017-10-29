@@ -288,10 +288,6 @@ class FlowImage extends AbstractAlgorithm {
         }
     }
 
-    public BufferedImage getGeneratingImage() {
-        return this;
-    }
-
     public String getProgressString() {
         return isDone ? "Done." :
                 String.format(String.format("Processed %%0%1$dd / %%0%1$dd pixels... (%%s%%%%)",
