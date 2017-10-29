@@ -30,6 +30,7 @@ public class FlowLauncher extends AbstractLauncher<FlowInputHandler> {
         if (getParams().doShowGUI()) flowImageBuilder.setGUIPanel(new ImageCreationDisplay(this));
         // Construct the image
         FlowImage flowImage = flowImageBuilder.build();
+        flowImage.generate();
 
         // Create the filename to store the image under
         String fileName = String.format("out/flow/%05d.png", Utils.findLastIndexInDirectory("out/flow/", "png") + 1);
