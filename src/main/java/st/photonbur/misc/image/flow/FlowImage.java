@@ -2,7 +2,7 @@ package st.photonbur.misc.image.flow;
 
 import st.photonbur.misc.image.ImageCreationDisplay;
 import st.photonbur.misc.image.ImageProvider;
-import st.photonbur.misc.image.Utils;
+import st.photonbur.misc.image.misc.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

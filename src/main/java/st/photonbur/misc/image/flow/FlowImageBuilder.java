@@ -1,41 +1,47 @@
 package st.photonbur.misc.image.flow;
 
-import st.photonbur.misc.image.ImageCreationDisplay;
+import st.photonbur.misc.image.AbstractBuilder;
 
+/**
+ * Builds the FlowImage using the parameters passed through this class.
+ */
 @SuppressWarnings("UnusedReturnValue")
-class FlowImageBuilder {
-    private int height;
-    private int width;
+class FlowImageBuilder extends AbstractBuilder<FlowImageBuilder, FlowImage> {
+    /**
+     * The amount of points to start generating with.
+     */
     private int nPoints;
-    private double deviation;
-    private ImageCreationDisplay guiPanel;
+    /**
+     * The amount of randomness to apply to each generated pixel.
+     */
+    private double randomness;
 
-    FlowImage build() {
-        return new FlowImage(width, height, nPoints, deviation, guiPanel);
+    /**
+     * @return A properly constructed {@link FlowImage} instance
+     */
+    public FlowImage build() {
+        return new FlowImage(imageWidth, imageHeight, nPoints, randomness, guiPanel);
     }
 
+    /**
+     * Sets the amount of points to start generating with.
+     *
+     * @param amountOfPoints The amount of points to start generating with
+     * @return The instance of this builder
+     */
     FlowImageBuilder setAmountOfPoints(int amountOfPoints) {
         this.nPoints = amountOfPoints;
         return this;
     }
 
-    FlowImageBuilder setGUIPanel(ImageCreationDisplay guiPanel) {
-        this.guiPanel = guiPanel;
-        return this;
-    }
-
-    FlowImageBuilder setHeight(int height) {
-        this.height = height;
-        return this;
-    }
-
-    FlowImageBuilder setMaxDeviation(double maxDeviation) {
-        this.deviation = maxDeviation;
-        return this;
-    }
-
-    FlowImageBuilder setWidth(int width) {
-        this.width = width;
+    /**
+     * Sets the amount of randomness to apply to each generated pixel.
+     *
+     * @param randomness The amount of randomness to apply to each generated pixel
+     * @return The instance of this builder
+     */
+    FlowImageBuilder setRandomness(double randomness) {
+        this.randomness = randomness;
         return this;
     }
 }

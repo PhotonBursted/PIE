@@ -1,4 +1,4 @@
-package st.photonbur.misc.image;
+package st.photonbur.misc.image.misc;
 
 import java.io.File;
 import java.security.InvalidParameterException;
@@ -8,15 +8,22 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class Utils {
+    /**
+     * Finds the integer value of the file with the highest index in its file name.
+     *
+     * @param dirPath   The directory to search in
+     * @param extension The extension to filter on
+     * @return The integer depicting the highest current indexed file in the directory
+     */
     public static int findLastIndexInDirectory(String dirPath, final String extension) {
         File directory = new File(dirPath);
 
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
+        // Check if the directory exists
+        if (!directory.exists()) return 0;
 
+        // Check if the directory actually is a directory
         if (directory.isDirectory()) {
-
+            // Find the highest index present in the directory
             //noinspection ConstantConditions
             return Arrays.stream(directory.listFiles((dir, name) -> {
                 int i = name.lastIndexOf(".");
@@ -30,9 +37,18 @@ public class Utils {
         }
     }
 
+    /**
+     * Calculates the difference in time between two instances of {@link LocalTime}.
+     *
+     * @param tStart The time marking the beginning of an event
+     * @param tEnd   The time marking the end of an event
+     * @return The difference in time between the two passed times. This wraps around towards tEnd.
+     */
     public static LocalTime getTimeDifference(LocalTime tStart, LocalTime tEnd) {
+        // Calculate the difference in nanoseconds
         long diff = Math.floorMod(tEnd.toNanoOfDay() - tStart.toNanoOfDay(), LocalTime.MAX.toNanoOfDay());
 
+        // Convert the long into a new LocalTime object step by step
         int hour = (int) TimeUnit.NANOSECONDS.toHours(diff);
         diff -= TimeUnit.HOURS.toNanos(hour);
         int mins = (int) TimeUnit.NANOSECONDS.toMinutes(diff);
