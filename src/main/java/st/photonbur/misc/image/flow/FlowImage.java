@@ -2,6 +2,7 @@ package st.photonbur.misc.image.flow;
 
 import st.photonbur.misc.image.AbstractAlgorithm;
 import st.photonbur.misc.image.ImageCreationDisplay;
+import st.photonbur.misc.image.misc.DoubleColor;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -10,7 +11,7 @@ import java.util.*;
 
 /**
  * Generates an image according to the FLOW algorithm.
- * See <a href="https://github.com/PhotonBursted/PIE/wiki/experiment-flow">the FLOW wiki page</a> for more information on the workings of it.
+ * See <a href="https://github.com/PhotonBursted/PIE/wiki/Experiment:-FLOW">the FLOW wiki page</a> for more information on the workings of it.
  */
 class FlowImage extends AbstractAlgorithm {
     /**
@@ -20,7 +21,7 @@ class FlowImage extends AbstractAlgorithm {
         /**
          * The color this node has.
          */
-        private final Color color;
+        private final DoubleColor color;
         /**
          * The location this node has on the canvas.
          */
@@ -31,7 +32,7 @@ class FlowImage extends AbstractAlgorithm {
 
             // Try calculating the color if enough neighbors are present.
             if (visitedNodes.getNeighborsOf(this).size() == 0) {
-                this.color = new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256));
+                this.color = new DoubleColor(r.nextInt(256), r.nextInt(256), r.nextInt(256));
             } else {
                 this.color = visitedNodes.getAverageColorFor(this);
             }
@@ -83,12 +84,12 @@ class FlowImage extends AbstractAlgorithm {
          * @param node The node of which the neighbors will be used to calculate their average color
          * @return The average color +/- some deviation
          */
-        private Color getAverageColorFor(Node node) {
+        private DoubleColor getAverageColorFor(Node node) {
             // Determine what nodes are this node's neighbors
             Set<Node> neighbors = getNeighborsOf(node);
 
             // Return the average color
-            return new Color(
+            return new DoubleColor(
                     mixColorChannel(neighbors, Color.RED),
                     mixColorChannel(neighbors, Color.GREEN),
                     mixColorChannel(neighbors, Color.BLUE)
@@ -143,9 +144,9 @@ class FlowImage extends AbstractAlgorithm {
          * @param channel   The color channel to base the calculation on
          * @return The new value of the passed color channel
          */
-        private int mixColorChannel(Set<Node> neighbors, Color channel) {
-            return (int) Math.round(Math.min(Math.max(
-                    neighbors.stream().mapToInt(nn -> {
+        private double mixColorChannel(Set<Node> neighbors, Color channel) {
+            return Math.min(Math.max(
+                    neighbors.stream().mapToDouble(nn -> {
                         if (channel == Color.RED) {
                             return nn.color.getRed();
                         } else if (channel == Color.GREEN) {
@@ -153,10 +154,10 @@ class FlowImage extends AbstractAlgorithm {
                         } else if (channel == Color.BLUE) {
                             return nn.color.getBlue();
                         } else {
-                            return 0;
+                            return 0f;
                         }
                     }).average().orElse(0) + r.nextDouble() * 2 * randomness - randomness
-                    , 0), 255));
+                    , 0d), 255d);
         }
 
         /**
