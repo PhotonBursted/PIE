@@ -100,14 +100,14 @@ public class ImageCreationDisplay extends JPanel {
     /**
      * Start sending updates to this panel.
      */
-    public void startUpdating() {
-        updateFuture = updateScheduler.scheduleAtFixedRate(this::repaint, 100, 100, TimeUnit.MILLISECONDS);
+    void startUpdating() {
+        updateFuture = updateScheduler.scheduleAtFixedRate(this::repaint, 40, 40, TimeUnit.MILLISECONDS);
     }
 
     /**
      * Stop updating this panel.
      */
-    public void stopUpdating() {
+    void stopUpdating() {
         updateFuture.cancel(true);
     }
 }

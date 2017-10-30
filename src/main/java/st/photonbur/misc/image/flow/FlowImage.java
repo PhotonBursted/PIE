@@ -7,7 +7,9 @@ import st.photonbur.misc.image.misc.DoubleColor;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * Generates an image according to the FLOW algorithm.
@@ -134,7 +136,6 @@ class FlowImage extends AbstractAlgorithm {
             return node.location.x + dx >= 0 && node.location.x + dy < getWidth() &&
                    node.location.y + dy >= 0 && node.location.y + dy < getHeight() &&
                    nodeMatrix[node.location.x + dx][node.location.y + dy] != null;
-
         }
 
         /**
@@ -176,7 +177,7 @@ class FlowImage extends AbstractAlgorithm {
     /**
      * Represents a list of nodes. Contains a few utility methods for easier and more efficient handling of Node objects.
      */
-    class NodeList extends ArrayList<Node> {
+    class NodeSet extends HashSet<Node> {
         /**
          * Adds a new node to this list.
          *
@@ -190,26 +191,14 @@ class FlowImage extends AbstractAlgorithm {
         }
 
         /**
-         * Checks whether a node is contained within this list.
-         *
-         * @param x The location on the x-axis of the node to check the presence of
-         * @param y The location on the y-axis of the node to check the presence of
-         * @return {@code true} when the node with the given coordinates is contained within this list, {@code false} otherwise
+         * @return A random node from this set.
          */
-        private boolean contains(int x, int y) {
-            return stream().anyMatch(node -> node.location.x == x && node.location.y == y);
-        }
-
-        /**
-         * Checks whether the list contains a node offset by relative coordinates.
-         *
-         * @param target The node to use as base
-         * @param dx     The amount of offset horizontally
-         * @param dy     The amount of offset vertically
-         * @return {@code true} when the list contains a node at the relative position, {@code false} otherwise
-         */
-        boolean hasNeighborAt(Node target, int dx, int dy) {
-            return contains(target.location.x + dx, target.location.y + dy);
+        Node getRandomNode() {
+            return stream()
+                    // Skip a random amount of nodes
+                    .skip(r.nextInt(size()))
+                    // Find any element within this stream, or return null otherwise
+                    .findFirst().orElse(null);
         }
     }
 
@@ -231,7 +220,7 @@ class FlowImage extends AbstractAlgorithm {
     /**
      * The list of nodes that haven't yet been processed, but are scheduled to do so.
      */
-    private NodeList activeNodes = new NodeList();
+    private NodeSet activeNodes = new NodeSet();
     /**
      * The matrix of nodes that hodls information on all already processed nodes.
      */
@@ -253,9 +242,8 @@ class FlowImage extends AbstractAlgorithm {
     protected void generateImage() {
         // Loop as long as the list of active nodes contains elements
         while (!activeNodes.isEmpty()) {
-            // Randomize the list
-            Collections.shuffle(activeNodes, r);
-            Node target = activeNodes.get(0);
+            // Get a random node from the set
+            Node target = activeNodes.getRandomNode();
 
             if (target != null) {
                 // Imprint the node's color onto the image object
@@ -266,24 +254,16 @@ class FlowImage extends AbstractAlgorithm {
                 activeNodes.remove(target);
 
                 // Try to mark unvisited neighbors as active
-                if (target.location.x - 1 >= 0 &&
-                        !visitedNodes.hasNeighborAt(target, -1, 0) &&
-                        !activeNodes.hasNeighborAt(target, -1, 0))
+                if (target.location.x - 1 >= 0 && !visitedNodes.hasNeighborAt(target, -1, 0))
                     activeNodes.add(target.location.x - 1, target.location.y);
 
-                if (target.location.x + 1 < getWidth() &&
-                        !visitedNodes.hasNeighborAt(target, 1, 0) &&
-                        !activeNodes.hasNeighborAt(target, 1, 0))
+                if (target.location.x + 1 < getWidth() && !visitedNodes.hasNeighborAt(target, 1, 0))
                     activeNodes.add(target.location.x + 1, target.location.y);
 
-                if (target.location.y - 1 >= 0 &&
-                        !visitedNodes.hasNeighborAt(target, 0, -1) &&
-                        !activeNodes.hasNeighborAt(target, 0, -1))
+                if (target.location.y - 1 >= 0 && !visitedNodes.hasNeighborAt(target, 0, -1))
                     activeNodes.add(target.location.x, target.location.y - 1);
 
-                if (target.location.y + 1 < getHeight() &&
-                        !visitedNodes.hasNeighborAt(target, 0, 1) &&
-                        !activeNodes.hasNeighborAt(target, 0, 1))
+                if (target.location.y + 1 < getHeight() && !visitedNodes.hasNeighborAt(target, 0, 1))
                     activeNodes.add(target.location.x, target.location.y + 1);
             }
         }
