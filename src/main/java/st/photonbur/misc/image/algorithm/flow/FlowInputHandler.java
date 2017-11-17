@@ -1,6 +1,6 @@
-package st.photonbur.misc.image.flow;
+package st.photonbur.misc.image.algorithm.flow;
 
-import st.photonbur.misc.image.AbstractInputHandler;
+import st.photonbur.misc.image.algorithm.AbstractInputHandler;
 import st.photonbur.misc.image.misc.InputStep;
 
 public class FlowInputHandler extends AbstractInputHandler {

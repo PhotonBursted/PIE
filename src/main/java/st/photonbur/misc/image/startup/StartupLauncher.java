@@ -1,9 +1,9 @@
 package st.photonbur.misc.image.startup;
 
-import st.photonbur.misc.image.AbstractInputHandler;
-import st.photonbur.misc.image.AbstractLauncher;
-import st.photonbur.misc.image.flow.FlowInputHandler;
-import st.photonbur.misc.image.flow.FlowLauncher;
+import st.photonbur.misc.image.algorithm.AbstractInputHandler;
+import st.photonbur.misc.image.algorithm.AbstractLauncher;
+import st.photonbur.misc.image.algorithm.flow.FlowInputHandler;
+import st.photonbur.misc.image.algorithm.flow.FlowLauncher;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

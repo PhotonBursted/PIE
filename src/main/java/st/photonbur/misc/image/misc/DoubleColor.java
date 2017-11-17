@@ -29,7 +29,7 @@ public class DoubleColor {
      * Converts this instance into a {@link Color}, rounding all channels to integers.
      * @return The color instance that matches the color values in this object as closely as possible
      */
-    private Color toNormalColor() {
+    public Color toNormalColor() {
         return new Color((int) Math.round(red), (int) Math.round(green), (int) Math.round(blue));
     }
 
@@ -52,13 +52,6 @@ public class DoubleColor {
      */
     public double getBlue() {
         return blue;
-    }
-
-    /**
-     * @return The closest matching integer interpretation of this object as RGB
-     */
-    public int getRGB() {
-        return toNormalColor().getRGB();
     }
 
     @Override

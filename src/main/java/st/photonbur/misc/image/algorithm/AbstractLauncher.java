@@ -1,4 +1,6 @@
-package st.photonbur.misc.image;
+package st.photonbur.misc.image.algorithm;
+
+import st.photonbur.misc.image.display.ImageCreationDisplay;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +16,11 @@ public abstract class AbstractLauncher<T extends AbstractInputHandler> extends J
      * The parameters used for this algorithm.
      */
     private T params;
+    private ImageCreationDisplay previewPanel = null;
+
+    public AbstractLauncher(T params) {
+        this.params = params;
+    }
 
     /**
      * Exports the image produced by the algorithm.
@@ -29,15 +36,15 @@ public abstract class AbstractLauncher<T extends AbstractInputHandler> extends J
      */
     public abstract String getDefaultPreviewTitle();
 
-    public AbstractLauncher(T params) {
-        this.params = params;
-    }
-
     /**
      * @return The parameters used for this algorithm
      */
     protected T getParams() {
         return params;
+    }
+
+    public ImageCreationDisplay getPreviewPanel() {
+        return previewPanel == null ? previewPanel = new ImageCreationDisplay(this) : previewPanel;
     }
 
     /**

@@ -1,7 +1,6 @@
-package st.photonbur.misc.image.flow;
+package st.photonbur.misc.image.algorithm.flow;
 
-import st.photonbur.misc.image.AbstractLauncher;
-import st.photonbur.misc.image.ImageCreationDisplay;
+import st.photonbur.misc.image.algorithm.AbstractLauncher;
 import st.photonbur.misc.image.misc.Utils;
 
 import javax.imageio.ImageIO;
@@ -27,7 +26,7 @@ public class FlowLauncher extends AbstractLauncher<FlowInputHandler> {
                 .setAmountOfPoints(getParams().getNPoints())
                 .setRandomness(getParams().getRandomness());
         // Add the GUI to the image builder so it can be updated
-        if (getParams().doShowGUI()) flowImageBuilder.setGUIPanel(new ImageCreationDisplay(this));
+        if (getParams().doShowGUI()) flowImageBuilder.setGUIFrame(this);
         // Construct the image
         FlowImage flowImage = flowImageBuilder.build();
         flowImage.generate();

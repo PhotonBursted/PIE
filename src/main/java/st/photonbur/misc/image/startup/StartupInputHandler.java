@@ -1,6 +1,6 @@
 package st.photonbur.misc.image.startup;
 
-import st.photonbur.misc.image.AbstractInputHandler;
+import st.photonbur.misc.image.algorithm.AbstractInputHandler;
 import st.photonbur.misc.image.misc.InputStep;
 
 /**

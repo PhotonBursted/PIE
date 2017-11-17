@@ -1,4 +1,4 @@
-package st.photonbur.misc.image;
+package st.photonbur.misc.image.algorithm;
 
 import st.photonbur.misc.image.misc.InputStep;
 

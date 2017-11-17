@@ -1,5 +1,9 @@
-package st.photonbur.misc.image;
+package st.photonbur.misc.image.algorithm;
 
+import st.photonbur.misc.image.display.ImageProvider;
+import st.photonbur.misc.image.display.renderer.ImageRenderType;
+import st.photonbur.misc.image.display.renderer.ImageRendererImpl;
+import st.photonbur.misc.image.misc.BufferedImageWithProperties;
 import st.photonbur.misc.image.misc.Utils;
 
 import java.awt.image.BufferedImage;
@@ -11,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Acts as base for any image generating algorithm.
  */
-public abstract class AbstractAlgorithm extends BufferedImage implements ImageProvider {
+public abstract class AbstractAlgorithm extends BufferedImageWithProperties implements ImageProvider {
     /**
      * Whether or not this algorithm is done processing.
      */
@@ -20,14 +24,19 @@ public abstract class AbstractAlgorithm extends BufferedImage implements ImagePr
     /**
      * The panel to push visual updates to.
      */
-    private final ImageCreationDisplay guiPanel;
+    private final AbstractLauncher targetFrame;
+    private ImageRendererImpl imageRenderer;
 
-    public AbstractAlgorithm(int width, int height, int imageType, ImageCreationDisplay guiPanel) {
+    public AbstractAlgorithm(int width, int height, int imageType, AbstractLauncher targetFrame) {
         super(width, height, imageType);
 
         this.isDone = false;
-        this.guiPanel = guiPanel;
+        this.targetFrame = targetFrame;
+
+        this.imageRenderer = buildImageRenderer();
     }
+
+    protected abstract ImageRendererImpl buildImageRenderer();
 
     /**
      * Kicks off all image generation related processes.
@@ -45,7 +54,7 @@ public abstract class AbstractAlgorithm extends BufferedImage implements ImagePr
         consolePrinter.scheduleAtFixedRate(this::printProgressString, 50, 50, TimeUnit.MILLISECONDS);
 
         // If needed, start updating the GUI
-        if (guiPanel != null) guiPanel.startUpdating();
+        if (targetFrame != null) targetFrame.getPreviewPanel().startUpdating();
 
         generateImage();
 
@@ -55,9 +64,9 @@ public abstract class AbstractAlgorithm extends BufferedImage implements ImagePr
         consolePrinter.shutdown();
         printProgressString();
 
-        if (guiPanel != null) {
-            guiPanel.stopUpdating();
-            guiPanel.repaint();
+        if (targetFrame != null) {
+            targetFrame.getPreviewPanel().stopUpdating();
+            targetFrame.repaint();
         }
 
         // Print the duration of the algorithm's running
@@ -70,19 +79,28 @@ public abstract class AbstractAlgorithm extends BufferedImage implements ImagePr
                 diff.getHour(), diff.getMinute(), diff.getSecond(), diff.getNano() / 1000000);
     }
 
-    public BufferedImage getGeneratingImage() {
-        return this;
-    }
-
     /**
      * Lets the algorithm go ahead and generate the image.
      */
     protected abstract void generateImage();
 
+    public ImageRendererImpl getImageRenderer() {
+        return imageRenderer;
+    }
+
+    public BufferedImage getGeneratingImage(ImageRenderType imageType) {
+        return imageRenderer.getImageFor(imageType);
+    }
+
     /**
      * Initializes the algorithm.
      */
     protected abstract void init();
+
+    @Override
+    public void onRenderSwitchEvent(int selectedIndex) {
+        imageRenderer.setRenderType(selectedIndex);
+    }
 
     private void printProgressString() {
         System.out.print(getProgressString() + "\r");

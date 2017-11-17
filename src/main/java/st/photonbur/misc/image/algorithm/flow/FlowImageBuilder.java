@@ -1,6 +1,6 @@
-package st.photonbur.misc.image.flow;
+package st.photonbur.misc.image.algorithm.flow;
 
-import st.photonbur.misc.image.AbstractBuilder;
+import st.photonbur.misc.image.algorithm.AbstractBuilder;
 
 /**
  * Builds the FlowImage using the parameters passed through this class.
@@ -20,7 +20,7 @@ class FlowImageBuilder extends AbstractBuilder<FlowImageBuilder, FlowImage> {
      * @return A properly constructed {@link FlowImage} instance
      */
     public FlowImage build() {
-        return new FlowImage(imageWidth, imageHeight, nPoints, randomness, guiPanel);
+        return new FlowImage(imageWidth, imageHeight, nPoints, randomness, guiFrame);
     }
 
     /**

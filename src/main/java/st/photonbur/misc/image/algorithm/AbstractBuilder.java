@@ -1,4 +1,4 @@
-package st.photonbur.misc.image;
+package st.photonbur.misc.image.algorithm;
 
 /**
  * Provides a base for building a certain algorithm.
@@ -11,7 +11,7 @@ public abstract class AbstractBuilder<TBuilder extends AbstractBuilder<TBuilder,
     /**
      * The panel to display the progress of the algorithm on.
      */
-    protected ImageCreationDisplay guiPanel;
+    protected AbstractLauncher guiFrame;
 
     /**
      * The height of the image to be generated.
@@ -31,11 +31,11 @@ public abstract class AbstractBuilder<TBuilder extends AbstractBuilder<TBuilder,
     /**
      * Sets the panel to display the progress of the algorithm on.
      *
-     * @param guiPanel The panel to display the progress of the algorithm on
+     * @param guiFrame The frame to display the progress of the algorithm on
      * @return The instance of this builder
      */
-    public TBuilder setGUIPanel(ImageCreationDisplay guiPanel) {
-        this.guiPanel = guiPanel;
+    public TBuilder setGUIFrame(AbstractLauncher guiFrame) {
+        this.guiFrame = guiFrame;
         return (TBuilder) this;
     }
 

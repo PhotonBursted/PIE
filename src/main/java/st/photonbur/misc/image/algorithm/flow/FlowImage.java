@@ -1,7 +1,11 @@
-package st.photonbur.misc.image.flow;
+package st.photonbur.misc.image.algorithm.flow;
 
-import st.photonbur.misc.image.AbstractAlgorithm;
-import st.photonbur.misc.image.ImageCreationDisplay;
+import st.photonbur.misc.image.algorithm.AbstractAlgorithm;
+import st.photonbur.misc.image.algorithm.AbstractLauncher;
+import st.photonbur.misc.image.display.renderer.ImageRenderType;
+import st.photonbur.misc.image.display.renderer.ImageRendererBuilder;
+import st.photonbur.misc.image.display.renderer.ImageRendererImpl;
+import st.photonbur.misc.image.misc.BufferedImageWithProperties;
 import st.photonbur.misc.image.misc.DoubleColor;
 
 import java.awt.*;
@@ -10,6 +14,7 @@ import java.text.DecimalFormat;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Generates an image according to the FLOW algorithm.
@@ -23,11 +28,11 @@ class FlowImage extends AbstractAlgorithm {
         /**
          * The color this node has.
          */
-        private final DoubleColor color;
+        final DoubleColor color;
         /**
          * The location this node has on the canvas.
          */
-        private final Point location;
+        final Point location;
 
         Node(Point location) {
             this.location = location;
@@ -81,6 +86,17 @@ class FlowImage extends AbstractAlgorithm {
         }
 
         /**
+         * Checks to see if the node with passed coordinate exists within this set.
+         *
+         * @param x The x-coordinate of the node to look for
+         * @param y The y-coordinate of the node to look for
+         * @return {@code true} if the node exists within this set, {@code false} otherwise
+         */
+        boolean contains(int x, int y) {
+            return nodeMatrix[x][y] != null;
+        }
+
+        /**
          * Returns the average color around a given node.
          *
          * @param node The node of which the neighbors will be used to calculate their average color
@@ -105,14 +121,10 @@ class FlowImage extends AbstractAlgorithm {
         private HashSet<Node> getNeighborsOf(Node node) {
             HashSet<Node> result = new HashSet<>();
 
-            if (node.location.x - 1 >= 0 && nodeMatrix[node.location.x - 1][node.location.y] != null)
-                result.add(nodeMatrix[node.location.x - 1][node.location.y]);
-            if (node.location.x + 1 < getWidth() && nodeMatrix[node.location.x + 1][node.location.y] != null)
-                result.add(nodeMatrix[node.location.x + 1][node.location.y]);
-            if (node.location.y - 1 >= 0 && nodeMatrix[node.location.x][node.location.y - 1] != null)
-                result.add(nodeMatrix[node.location.x][node.location.y - 1]);
-            if (node.location.y + 1 < getHeight() && nodeMatrix[node.location.x][node.location.y + 1] != null)
-                result.add(nodeMatrix[node.location.x][node.location.y + 1]);
+            if (hasNeighborAt(node, -1,  0)) result.add(nodeMatrix[node.location.x - 1][node.location.y]);
+            if (hasNeighborAt(node,  1,  0)) result.add(nodeMatrix[node.location.x + 1][node.location.y]);
+            if (hasNeighborAt(node,  0, -1)) result.add(nodeMatrix[node.location.x][node.location.y - 1]);
+            if (hasNeighborAt(node,  0,  1)) result.add(nodeMatrix[node.location.x][node.location.y + 1]);
 
             return result;
         }
@@ -133,9 +145,9 @@ class FlowImage extends AbstractAlgorithm {
          * @return     {@code true} when a neighbor was detected within this matrix, {@code false} otherwise
          */
         boolean hasNeighborAt(Node node, int dx, int dy) {
-            return node.location.x + dx >= 0 && node.location.x + dy < getWidth() &&
+            return node.location.x + dx >= 0 && node.location.x + dx < getWidth() &&
                    node.location.y + dy >= 0 && node.location.y + dy < getHeight() &&
-                   nodeMatrix[node.location.x + dx][node.location.y + dy] != null;
+                   contains(node.location.x + dx, node.location.y + dy);
         }
 
         /**
@@ -167,7 +179,7 @@ class FlowImage extends AbstractAlgorithm {
          * @param node The node to store
          */
         void store(Node node) {
-            if (nodeMatrix[node.location.x][node.location.y] == null) {
+            if (!contains(node.location.x, node.location.y)) {
                 usedVolume++;
                 nodeMatrix[node.location.x][node.location.y] = node;
             }
@@ -177,28 +189,149 @@ class FlowImage extends AbstractAlgorithm {
     /**
      * Represents a list of nodes. Contains a few utility methods for easier and more efficient handling of Node objects.
      */
-    class NodeSet extends HashSet<Node> {
+    class NodeSet extends ConcurrentHashMap<Node, Byte> {
+        private NodeRegistry registry;
+
+        NodeSet() {
+            super(nPoints * (2 * getWidth() + 2 * getHeight()));
+            registry = new NodeRegistry();
+        }
+
         /**
          * Adds a new node to this list.
          *
          * @param x The location of the node on the x-axis
          * @param y The location of the node on the y-axis
-         * @return {@code true} when the addition was successful, {@code false} otherwise
          */
-        @SuppressWarnings("UnusedReturnValue")
-        boolean add(int x, int y) {
-            return add(new Node(new Point(x, y)));
+        void add(int x, int y) {
+            putIfAbsent(new Node(new Point(x, y)), (byte) 0);
+            getImageRenderer().render(x, y);
+        }
+
+        /**
+         * Checks to see if the node with passed coordinate exists within this set.
+         *
+         * @param x The x-coordinate of the node to look for
+         * @param y The y-coordinate of the node to look for
+         * @return {@code true} if the node exists within this set, {@code false} otherwise
+         */
+        boolean contains(int x, int y) {
+            return registry.contains(x, y);
         }
 
         /**
          * @return A random node from this set.
          */
         Node getRandomNode() {
-            return stream()
+            return keySet().stream()
                     // Skip a random amount of nodes
                     .skip(r.nextInt(size()))
                     // Find any element within this stream, or return null otherwise
                     .findFirst().orElse(null);
+        }
+
+        @Override
+        public Byte putIfAbsent(Node key, Byte value) {
+            Byte result = super.putIfAbsent(key, value);
+            registry.store(key.location.x, key.location.y);
+
+            return result;
+        }
+
+        /**
+         * Removes a node from this set.
+         *
+         * @param key The node to remove
+         */
+        void remove(Node key) {
+            remove(((Object) key));
+            registry.remove(key.location.x, key.location.y);
+        }
+
+        /**
+         * Acts as a registry for the {@link NodeSet} class.
+         * Keeps track of what locations are stored in it and provides much faster lookup.
+         */
+        private class NodeRegistry {
+            /**
+             * The full size of the image is divided into buckets.
+             * These buckets each store 64 location states; each present location is marked by a 1, or with a 0 otherwise.
+             */
+            long[] buckets;
+
+            NodeRegistry() {
+                buckets = new long[(int) Math.ceil(getWidth() * getHeight() / 64)];
+            }
+
+            /**
+             * Checks whether the location is contained within the registry.
+             *
+             * @param x The x coordinate of the location to check its presence of
+             * @param y The y coordinate of the location to check its presence of
+             * @return {@code true} if the location is contained within this registry, {@code false} otherwise
+             */
+            boolean contains(int x, int y) {
+                // Calculate the "ID" of the location (transformation from 2D point to 1D number line)
+                int targetID = x * getHeight() + y;
+                // Determine in which bucket the state of the location is stored
+                // This is done by bit-shifting the ID 6 places to the right (dividing by 64 (2^6))
+                int targetBucket = targetID >> 6;
+                // Determine the position within the bucket
+                byte targetPos = (byte) (targetID % 64);
+
+                // Retrieve the state of the location from the bucket.
+                // This is done by bit-shifting to the right again, this time with the position to get.
+                // Then, it is masked so that only one bit is returned.
+                return ((buckets[targetBucket] >> targetPos) & 0b1) == 1;
+            }
+
+            /**
+             * Puts a certain value into the registry.
+             *
+             * @param x The x coordinate to store the new state of
+             * @param y The y coordinate to store the new state of
+             * @param doStore Whether the location is being stored or removed
+             */
+            private void put(int x, int y, boolean doStore) {
+                // Calculate the "ID" of the location (transformation from 2D point to 1D number line)
+                int targetID = x * getHeight() + y;
+                // Determine in which bucket the state of the location is stored
+                // This is done by bit-shifting the ID 6 places to the right (dividing by 64 (2^6))
+                int targetBucket = targetID >> 6;
+                // Determine the position within the bucket
+                byte targetPos = (byte) (targetID % 64);
+
+                // It depends on whether the location state is being stored or removed which operation has to be executed.
+                if (doStore) {
+                    // If the location is being stored, a simple bit-wise OR operation is enough.
+                    // The bucket is updated by means of bit-shifting a 1 to the left to the spot to store it in.
+                    buckets[targetBucket] |= 1L << targetPos;
+                } else {
+                    // If the location is being removed, an inverted bit-wise AND operation is sufficient.
+                    // The bucket is updated by bit-shifting a 1 to the left until the spot to clear is reached.
+                    // Then it is inverted, again bit-wise, so that the bit-shifted 1 turns into a 0, masking the bit to clear.
+                    buckets[targetBucket] &= ~(1L << targetPos);
+                }
+            }
+
+            /**
+             * Marks a location as removed within this registry.
+             *
+             * @param x The x coordinate of the location to mark as removed
+             * @param y The y coordinate of the location to mark as removed
+             */
+            void remove(int x, int y) {
+                put(x, y, false);
+            }
+
+            /**
+             * Marks a location as stored within this registry.
+             * @param x The x coordinate of the location to mark as store
+             * @param y The y coordinate of the location to mark as stored
+             */
+            void store(int x, int y) {
+                put(x, y, true);
+            }
         }
     }
 
@@ -208,14 +341,13 @@ class FlowImage extends AbstractAlgorithm {
     private static final Random r = new Random();
 
     /**
-     * The randomness to apply to generating colors.
+     * The randomness to apply to gen erating colors.
      */
     private final double randomness;
     /**
      * The amount of points to start generating with.
      */
     private final int nPoints;
-
 
     /**
      * The list of nodes that haven't yet been processed, but are scheduled to do so.
@@ -226,16 +358,32 @@ class FlowImage extends AbstractAlgorithm {
      */
     private NodeMatrix visitedNodes = new NodeMatrix();
 
-    FlowImage(int width, int height, int nPoints, double deviation, ImageCreationDisplay guiPanel) {
+    FlowImage(int width, int height, int nPoints, double deviation, AbstractLauncher targetFrame) {
         // Create the acutal image object using ARGB (to allow for transparency in the preview)
-        super(width, height, BufferedImage.TYPE_INT_ARGB, guiPanel);
+        super(width, height, BufferedImage.TYPE_INT_ARGB, targetFrame);
         this.randomness = deviation;
         this.nPoints = nPoints;
 
-        if (guiPanel != null) guiPanel.setProvider(this);
+        if (targetFrame != null) targetFrame.getPreviewPanel().setProvider(this);
 
         System.out.printf("\nCreating FLOW image with parameters:\n - Image dimensions: %dx%d\n - Starting nodes: %d\n - Deviation: max. %s per pixel step\n\n",
                 width, height, nPoints, new DecimalFormat("0.00").format(deviation).replace(",", "."));
+    }
+
+    @Override
+    protected ImageRendererImpl buildImageRenderer() {
+        return new ImageRendererBuilder()
+                .addRenderer(ImageRenderType.NORMAL, this,
+                        (x, y) -> visitedNodes.contains(x, y)
+                                ? visitedNodes.nodeMatrix[x][y].color.toNormalColor()
+                                : null)
+                .addRenderer(ImageRenderType.TYPE, new BufferedImageWithProperties(getWidth(), getHeight(), getType()),
+                        (x, y) -> {
+                            if (activeNodes.contains(x, y)) return Color.RED;
+                            if (visitedNodes.contains(x, y)) return Color.BLUE;
+                            return null;
+                        })
+                .build();
     }
 
     @Override
@@ -246,12 +394,11 @@ class FlowImage extends AbstractAlgorithm {
             Node target = activeNodes.getRandomNode();
 
             if (target != null) {
-                // Imprint the node's color onto the image object
-                setRGB(target.location.x, target.location.y, target.color.getRGB());
-
                 // Mark the node as visited
                 visitedNodes.store(target);
                 activeNodes.remove(target);
+
+                getImageRenderer().render(target.location.x, target.location.y);
 
                 // Try to mark unvisited neighbors as active
                 if (target.location.x - 1 >= 0 && !visitedNodes.hasNeighborAt(target, -1, 0))
@@ -269,6 +416,7 @@ class FlowImage extends AbstractAlgorithm {
         }
     }
 
+    @Override
     public String getProgressString() {
         return isDone ? "Done." :
                 String.format(String.format("Processed %%0%1$dd / %%0%1$dd pixels... (%%s%%%%)",
