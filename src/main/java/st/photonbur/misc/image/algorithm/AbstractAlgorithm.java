@@ -65,7 +65,6 @@ public abstract class AbstractAlgorithm extends BufferedImageWithProperties impl
         printProgressString();
 
         if (targetFrame != null) {
-            targetFrame.getPreviewPanel().stopUpdating();
             targetFrame.repaint();
         }
 

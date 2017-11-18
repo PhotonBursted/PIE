@@ -7,6 +7,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.*;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,6 +42,9 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
      */
     private volatile boolean isBusy = false;
 
+    private double zoomFactor = 1d;
+    private Point2D.Double offset = new Point2D.Double();
+
     public ImageCreationDisplay(AbstractLauncher frame) {
         super();
         this.addChangeListener(this);
@@ -64,7 +69,9 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
         }
 
         for (ImageRenderType imageType : provider.getImageRenderer().getSupportedTypes()) {
-            this.addTab(imageType.getDisplayName(), new ImageCreationPanel(imageType));
+            ImageCreationPanel icp = new ImageCreationPanel(imageType);
+            new MouseInputHandler(icp);
+            this.addTab(imageType.getDisplayName(), icp);
         }
 
         this.invalidate();
@@ -121,7 +128,9 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
 
                 // Apply the translation and scaling
                 g2d.translate(paddingX, paddingY);
+                g2d.translate(offset.getX() * zoomFactor, offset.getY() * zoomFactor);
                 g2d.scale(cellSize, cellSize);
+                g2d.scale(zoomFactor, zoomFactor);
 
                 // Draw the preview
                 g2d.drawImage(image, 0, 0, Color.GRAY, null);
@@ -139,4 +148,51 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
         }
     }
 
+    private class MouseInputHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
+        private static final double ZOOMSPEED = 1.25;
+
+        private Point dragFrom;
+
+        MouseInputHandler(ImageCreationPanel panel) {
+            panel.addMouseListener(this);
+            panel.addMouseMotionListener(this);
+            panel.addMouseWheelListener(this);
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) { }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            offset.x += (e.getX() - dragFrom.getX()) / zoomFactor;
+            offset.y += (e.getY() - dragFrom.getY()) / zoomFactor;
+
+            dragFrom = e.getPoint();
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) { }
+
+        @Override
+        public void mouseExited(MouseEvent e) { }
+
+        @Override
+        public void mouseMoved(MouseEvent e) { }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (dragFrom == null) dragFrom = e.getPoint();
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            dragFrom = null;
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+            if (e.getWheelRotation() > 0) zoomFactor /= ZOOMSPEED;
+            else zoomFactor *= ZOOMSPEED;
+        }
+    }
 }
