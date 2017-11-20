@@ -383,6 +383,21 @@ class FlowImage extends AbstractAlgorithm {
                             if (visitedNodes.contains(x, y)) return Color.BLUE;
                             return null;
                         })
+                .addRenderer(ImageRenderType.RED, new BufferedImageWithProperties(getWidth(), getHeight(), getType()),
+                        (x, y) -> visitedNodes.contains(x, y)
+                                ? new Color(visitedNodes.nodeMatrix[x][y].color.toNormalColor().getRed(), 0, 0)
+                                : null
+                )
+                .addRenderer(ImageRenderType.GREEN, new BufferedImageWithProperties(getWidth(), getHeight(), getType()),
+                        (x, y) -> visitedNodes.contains(x, y)
+                                ? new Color(0, visitedNodes.nodeMatrix[x][y].color.toNormalColor().getGreen(), 0)
+                                : null
+                )
+                .addRenderer(ImageRenderType.BLUE, new BufferedImageWithProperties(getWidth(), getHeight(), getType()),
+                        (x, y) -> visitedNodes.contains(x, y)
+                                ? new Color(0, 0, visitedNodes.nodeMatrix[x][y].color.toNormalColor().getBlue())
+                                : null
+                )
                 .build();
     }
 

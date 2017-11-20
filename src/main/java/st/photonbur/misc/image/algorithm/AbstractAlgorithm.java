@@ -65,6 +65,7 @@ public abstract class AbstractAlgorithm extends BufferedImageWithProperties impl
         printProgressString();
 
         if (targetFrame != null) {
+            targetFrame.getPreviewPanel().stopUpdating();
             targetFrame.repaint();
         }
 
@@ -97,8 +98,8 @@ public abstract class AbstractAlgorithm extends BufferedImageWithProperties impl
     protected abstract void init();
 
     @Override
-    public void onRenderSwitchEvent(int selectedIndex) {
-        imageRenderer.setRenderType(selectedIndex);
+    public void onRenderSwitchEvent(int selectedIndex, Runnable callback) {
+        imageRenderer.setRenderType(selectedIndex, callback);
     }
 
     private void printProgressString() {

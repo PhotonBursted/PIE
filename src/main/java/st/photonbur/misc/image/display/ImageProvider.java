@@ -29,6 +29,7 @@ public interface ImageProvider {
      * Fired when the renderer has to switch to another type as another tab has been selected.
      *
      * @param selectedIndex The index of the tab that has newly been selected
+     * @param callback      The action to execute after the rendering has finished
      */
-    void onRenderSwitchEvent(int selectedIndex);
+    void onRenderSwitchEvent(int selectedIndex, Runnable callback);
 }

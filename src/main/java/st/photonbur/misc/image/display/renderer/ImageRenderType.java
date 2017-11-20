@@ -5,7 +5,7 @@ package st.photonbur.misc.image.display.renderer;
  * These can be used by algorithms to specify what render modes they support, which can in turn be displayed in the GUI.
  */
 public enum ImageRenderType {
-    NORMAL("normal"), TYPE("type");
+    NORMAL("normal"), TYPE("type"), RED("redFilter"), GREEN("greenFilter"), BLUE("blueFilter");
 
     /**
      * The display name corresponding to the enum value.

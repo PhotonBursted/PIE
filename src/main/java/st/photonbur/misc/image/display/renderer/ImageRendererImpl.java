@@ -70,7 +70,7 @@ public class ImageRendererImpl implements ImageRenderer {
      * This is used to let the rendering of an image "catch up" after it has been idle and not saving to the image.
      *
      * @param bounds The bounds determining what part of the image to redraw
-     * @see ImageRendererImpl#setRenderType(int)
+     * @see ImageRendererImpl#setRenderType(int, Runnable)
      * @see ImageRendererImpl#render(int, int)
      */
     private void rerender(Rectangle bounds) {
@@ -83,8 +83,9 @@ public class ImageRendererImpl implements ImageRenderer {
      * Sets the current render type to another.
      *
      * @param typeIndex The index of the render type to apply
+     * @param callback  The action to carry out after rerendering has finished
      */
-    public void setRenderType(int typeIndex) {
+    public void setRenderType(int typeIndex, Runnable callback) {
         // Try to retrieve what area has been drawn in so far
         Rectangle drawnArea = null;
         if (images.get(renderType) != null) drawnArea = images.get(renderType).getDrawnArea();
@@ -97,6 +98,9 @@ public class ImageRendererImpl implements ImageRenderer {
 
         // Rerender the new image on a new thread
         Rectangle finalDrawnArea = drawnArea;
-        if (finalDrawnArea != null) new Thread(() -> rerender(finalDrawnArea)).start();
+        if (finalDrawnArea != null) new Thread(() -> {
+            rerender(finalDrawnArea);
+            if (callback != null) callback.run();
+        }).start();
     }
 }

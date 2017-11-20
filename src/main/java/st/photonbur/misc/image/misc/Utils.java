@@ -59,4 +59,14 @@ public class Utils {
 
         return LocalTime.of(hour, mins, secs, nano);
     }
+
+    /**
+     * Bounds an input to be within the restrictions specified.
+     * @param input The input to limit
+     * @param min The minimum to restrict the limit to
+     * @param max The maximum to restrict the limit to
+     */
+    public static double limit(double input, double min, double max) {
+        return Math.min(Math.max(min, input), max);
+    }
 }

@@ -2,6 +2,7 @@ package st.photonbur.misc.image.display;
 
 import st.photonbur.misc.image.algorithm.AbstractLauncher;
 import st.photonbur.misc.image.display.renderer.ImageRenderType;
+import st.photonbur.misc.image.misc.Utils;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -44,6 +45,8 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
 
     private double zoomFactor = 1d;
     private Point2D.Double offset = new Point2D.Double();
+    private double paddingX = 0, paddingY = 0;
+    private double cellSize;
 
     public ImageCreationDisplay(AbstractLauncher frame) {
         super();
@@ -69,9 +72,7 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
         }
 
         for (ImageRenderType imageType : provider.getImageRenderer().getSupportedTypes()) {
-            ImageCreationPanel icp = new ImageCreationPanel(imageType);
-            new MouseInputHandler(icp);
-            this.addTab(imageType.getDisplayName(), icp);
+            this.addTab(imageType.getDisplayName(), new ImageCreationPanel(imageType));
         }
 
         this.invalidate();
@@ -86,7 +87,7 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
 
     @Override
     public void stateChanged(ChangeEvent e) {
-        provider.onRenderSwitchEvent(this.getSelectedIndex());
+        provider.onRenderSwitchEvent(this.getSelectedIndex(), this::repaint);
     }
 
     /**
@@ -101,6 +102,7 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
 
         private ImageCreationPanel(ImageRenderType imageType) {
             this.imageType = imageType;
+            new MouseInputHandler(this);
         }
 
         @Override
@@ -115,14 +117,14 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
                 Graphics2D g2d = (Graphics2D) g;
                 BufferedImage image = provider.getGeneratingImage(imageType);
 
-                double paddingX = 0, paddingY = 0, cellSize;
-
                 // Calculate position and scaling on screen
                 if (getWidth() / ((double) image.getWidth()) > getHeight() / ((double) image.getHeight())) {
                     cellSize = getHeight() / ((double) image.getHeight());
                     paddingX = getWidth() / 2d - image.getWidth() * cellSize / 2d;
+                    paddingY = 0;
                 } else {
                     cellSize = getWidth() / ((double) image.getWidth());
+                    paddingX = 0;
                     paddingY = getHeight() / 2d - image.getHeight() * cellSize / 2d;
                 }
 
@@ -146,53 +148,62 @@ public class ImageCreationDisplay extends JTabbedPane implements ChangeListener 
                 isBusy = false;
             }
         }
-    }
 
-    private class MouseInputHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
-        private static final double ZOOMSPEED = 1.25;
+        private class MouseInputHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
+            private static final double ZOOMSPEED = 1.25;
 
-        private Point dragFrom;
+            private Point dragFrom;
 
-        MouseInputHandler(ImageCreationPanel panel) {
-            panel.addMouseListener(this);
-            panel.addMouseMotionListener(this);
-            panel.addMouseWheelListener(this);
-        }
+            MouseInputHandler(ImageCreationPanel panel) {
+                panel.addMouseListener(this);
+                panel.addMouseMotionListener(this);
+                panel.addMouseWheelListener(this);
+            }
 
-        @Override
-        public void mouseClicked(MouseEvent e) { }
+            @Override
+            public void mouseClicked(MouseEvent e) { }
 
-        @Override
-        public void mouseDragged(MouseEvent e) {
-            offset.x += (e.getX() - dragFrom.getX()) / zoomFactor;
-            offset.y += (e.getY() - dragFrom.getY()) / zoomFactor;
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                double xMaxLeft = -paddingX / zoomFactor;
+                double xMaxRight = (getWidth() - provider.getGeneratingImage(imageType).getWidth() * zoomFactor * cellSize - paddingX) / zoomFactor;
 
-            dragFrom = e.getPoint();
-        }
+                double yMaxLeft = -paddingY / zoomFactor;
+                double yMaxRight = (getHeight() - provider.getGeneratingImage(imageType).getHeight() * zoomFactor * cellSize - paddingY) / zoomFactor;
 
-        @Override
-        public void mouseEntered(MouseEvent e) { }
+                offset.x = Utils.limit(offset.x + (e == null ? 0 : (e.getX() - dragFrom.getX())) / zoomFactor, xMaxRight, xMaxLeft);
+                offset.y = Utils.limit(offset.y + (e == null ? 0 : (e.getY() - dragFrom.getY())) / zoomFactor, yMaxRight, yMaxLeft);
 
-        @Override
-        public void mouseExited(MouseEvent e) { }
+                if (e != null) dragFrom = e.getPoint();
+            }
 
-        @Override
-        public void mouseMoved(MouseEvent e) { }
+            @Override
+            public void mouseEntered(MouseEvent e) { }
 
-        @Override
-        public void mousePressed(MouseEvent e) {
-            if (dragFrom == null) dragFrom = e.getPoint();
-        }
+            @Override
+            public void mouseExited(MouseEvent e) { }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            dragFrom = null;
-        }
+            @Override
+            public void mouseMoved(MouseEvent e) { }
 
-        @Override
-        public void mouseWheelMoved(MouseWheelEvent e) {
-            if (e.getWheelRotation() > 0) zoomFactor /= ZOOMSPEED;
-            else zoomFactor *= ZOOMSPEED;
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (dragFrom == null) dragFrom = e.getPoint();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                dragFrom = null;
+            }
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (e.getWheelRotation() > 0) zoomFactor /= ZOOMSPEED;
+                else zoomFactor *= ZOOMSPEED;
+
+
+                repaint();
+            }
         }
     }
 }
